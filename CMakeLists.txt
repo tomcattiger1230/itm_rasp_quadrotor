@@ -21,7 +21,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIR})
 find_package(OpenCV 4 REQUIRED)
-find_package(cmake_module REQUIRED)
+# find_package(cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 add_definitions(${EIGEN_DEFINITIONS})
@@ -114,7 +114,7 @@ find_package(aruco REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES itm_rasp_quadrotor
  CATKIN_DEPENDS nav_msgs roscpp rospy std_msgs
 #  DEPENDS system_lib
