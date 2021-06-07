@@ -8,8 +8,14 @@
     <arg name="respawn_mavros" default="false" />
     <arg name="robot_name" default="ITM_Q250" />
 
-    <remap from="/mavros/vision_pose/pose" to="/vrpn_client_node/$(arg robot_name)/pose" />
 
+    <include file="$(find itm_rasp_quadrotor)/launch/node.launch">
+        <arg name="sub_topic" value="/vrpn_client_node/$(arg robot_name)/pose" />
+        <arg name="pub_topic" value="/$(arg robot_name)/pose" />
+        <arg name="rate" value="50" />
+    </include>
+
+    <remap from="/mavros/vision_pose/pose" to="/vrpn_client_node/$(arg robot_name)/pose" />
     <include file="$(find mavros)/launch/node.launch">
         <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
         <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
