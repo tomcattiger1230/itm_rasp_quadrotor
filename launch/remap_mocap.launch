@@ -3,8 +3,8 @@
     <arg name="pub_topic" default="/ITM_Q300/pose"/>
     <arg name="rate" default="50"/>
     <node name="republish_pose" pkg="itm_rasp_quadrotor" type="repost_location.py" output="screen" >
-        <arg name="sub_topic_name" value="$(arg sub_topic)" />
-        <arg name="pub_topic_name" value="$(arg pub_topic)" />
-        <arg name="sample_rate" value="$(arg rate)" />
+        <param name="sub_topic_name" value="$(arg sub_topic)" />
+        <param name="pub_topic_name" value="$(arg pub_topic)" />
+        <param name="sample_rate" value="$(arg rate)" />
     </node>
 </launch>

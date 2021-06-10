@@ -4,12 +4,12 @@
 Author: Wei Luo
 Date: 2021-06-07 22:03:23
 LastEditors: Wei Luo
-LastEditTime: 2021-06-07 22:21:15
+LastEditTime: 2021-06-10 18:26:17
 Note: Note
 '''
 
 import rospy
-from geometry_msgs import PoseStamped
+from geometry_msgs.msg import PoseStamped
 
 
 def pose_sub_callback(msg):
