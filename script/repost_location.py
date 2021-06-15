@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2021-06-07 22:03:23
 LastEditors: Wei Luo
-LastEditTime: 2021-06-10 18:26:17
+LastEditTime: 2021-06-15 15:11:11
 Note: Note
 '''
 
@@ -31,5 +31,6 @@ if __name__ == '__main__':
     rate = rospy.Rate(sample_rate)
 
     while not rospy.is_shutdown():
+        mocap_pose.header.stamp = rospy.Time.now()
         pose_pub.publish(mocap_pose)
         rate.sleep()
