@@ -4,8 +4,8 @@
 Author: Wei Luo
 Date: 2021-06-07 22:03:23
 LastEditors: Wei Luo
-LastEditTime: 2021-06-15 15:11:11
-Note: Note
+LastEditTime: 2022-03-11 14:16:17
+Note: Sometimes one may need to change the rate of the localization msgs
 '''
 
 import rospy
@@ -24,8 +24,8 @@ if __name__ == '__main__':
     sample_rate = rospy.get_param('~sample_rate')
     mocap_pose = PoseStamped()
 
-    pose_mocap_sub = rospy.Subscriber(
-        sub_topic_name, PoseStamped, pose_sub_callback)
+    pose_mocap_sub = rospy.Subscriber(sub_topic_name, PoseStamped,
+                                      pose_sub_callback)
     pose_pub = rospy.Publisher(pub_topic_name, PoseStamped, queue_size=10)
 
     rate = rospy.Rate(sample_rate)
