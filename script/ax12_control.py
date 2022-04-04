@@ -4,23 +4,27 @@
 Author: Wei Luo
 Date: 2022-04-04 17:48:11
 LastEditors: Wei Luo
-LastEditTime: 2022-04-04 18:00:11
+LastEditTime: 2022-04-05 00:22:18
 Note: Note
 '''
 
-from .ax12 import Ax12
+from ax12 import Ax12
 import rospy
 from itm_mav_msgs.msg import itm_trajectory_msg
 from std_msgs.msg import Float32
 import numpy as np
+from serial import Serial
 
 
-class AX12Controller(object):
-    def __init__(self, serial_port, dynamixel_id=1):
-        # Connect to the serial port
-        self.serial_connection = Ax12()
-        # incase multiple dynamixel motors
-        self.dynamixel_id = dynamixel_id
+class AX12Controller(Ax12):
+    def __init__(self, serial_port, id=None):
+        self.port = Serial(serial_port, baudrate=1000000, timeout=0.001)
+        if id is None:
+            id_list = self.learnServos()
+            self.device_Id = id_list[0]
+        else:
+            self.device_Id = id
+        super(AX12Controller, self).__init__()
         # subscribe trajectory
         self.sub_trajectory = rospy.Subscriber('/robot_trajectory',
                                                itm_trajectory_msg,
@@ -39,10 +43,8 @@ class AX12Controller(object):
         self.reference_alpha_rate = msg.traj[0].alpha_rate
 
     def progress(self, ):
-        pass
-        # self.serial_connection.goto(self.dynamixel_id,
-        #                             self.reference_alpha,
-        #                             speed=300)
+        self.move(self.device_Id, self.reference_alpha)
+        print(self.readPosition(self.device_Id))
 
 
 if __name__ == '__main__':
