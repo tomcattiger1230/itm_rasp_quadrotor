@@ -2,23 +2,23 @@
 # coding=UTF-8
 '''
 Author: Wei Luo
-Date: 2022-04-04 17:48:11
+Date: 2022-04-01 00:38:00
 LastEditors: Wei Luo
-LastEditTime: 2022-04-04 18:00:11
+LastEditTime: 2022-04-04 16:31:33
 Note: Note
 '''
 
-from .ax12 import Ax12
 import rospy
+import numpy as np
+from pyax12.connection import Connection
 from itm_mav_msgs.msg import itm_trajectory_msg
 from std_msgs.msg import Float32
-import numpy as np
 
 
 class AX12Controller(object):
     def __init__(self, serial_port, dynamixel_id=1):
         # Connect to the serial port
-        self.serial_connection = Ax12()
+        self.serial_connection = Connection(port=serial_port, baudrate=57600)
         # incase multiple dynamixel motors
         self.dynamixel_id = dynamixel_id
         # subscribe trajectory
@@ -39,10 +39,9 @@ class AX12Controller(object):
         self.reference_alpha_rate = msg.traj[0].alpha_rate
 
     def progress(self, ):
-        pass
-        # self.serial_connection.goto(self.dynamixel_id,
-        #                             self.reference_alpha,
-        #                             speed=300)
+        self.serial_connection.goto(self.dynamixel_id,
+                                    self.reference_alpha,
+                                    speed=300)
 
 
 if __name__ == '__main__':
