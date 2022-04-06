@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 16:14:49
 LastEditors: Wei Luo
-LastEditTime: 2022-04-06 16:16:54
+LastEditTime: 2022-04-06 18:12:59
 Note: Note
 '''
 
@@ -14,8 +14,8 @@ import time
 if __name__ == '__main__':
     obj = AX12AMotorController()
     time.sleep(2)
-    obj.movePosition(1, 511)
+    obj.movePosition(1, 150)
     time.sleep(2)
-    obj.movePosition(1, 600)
+    obj.movePosition(1, 170)
     time.sleep(2)
-    obj.movePosition(1, 400)
+    obj.movePosition(1, 130)

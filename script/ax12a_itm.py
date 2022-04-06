@@ -4,9 +4,15 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-06 18:01:42
+LastEditTime: 2022-04-06 18:56:31
 Note: self-design class for handle AX-12A
-smart servo motor using Raspberry PI
+smart servo motor using Raspberry PI Python2/3
+
+Based on Jesse Merritt's script:
+https://github.com/jes1510/python_dynamixels
+and Josue Alejandro Savage's Arduino library:
+http://savageelectronics.blogspot.it/2011/01/arduino-y-dynamixel-ax-12.html
+
 '''
 
 from serial import Serial
@@ -163,7 +169,7 @@ class AX12AMotorController(DynamixelProtocal1):
         GPIO.output(self.RPI_DIRECTION_PIN, d)
         sleep(self.RPI_DIRECTION_SWITCH_DELAY)
 
-    def readData(self, id):
+    def readErrorData(self, id):
         self.direction(self.RPI_DIRECTION_RX)
         reply = self.port.read(5)  # [0xff, 0xff, origin, length, error]
         try:
@@ -192,24 +198,173 @@ class AX12AMotorController(DynamixelProtocal1):
         except Exception as detail:
             pass
 
-    def movePosition(self, id, position):
+    def movePosition(self, id, position, degree=True):
         """
             move to position 0->1023 (value) | 0->300 [degree]
         """
+        if degree:
+            position = int(position / 300 * 1023)
+
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
         p = [position & 0xff, position >> 8]
         checksum = (~(id + self.AX_GOAL_LENGTH + self.AX_WRITE_DATA +
                       self.AX_GOAL_POSITION_L + p[0] + p[1])) & 0xff
-        output = bytearray([self.AX_START])
-        output += bytearray([self.AX_START])
-        output += bytearray([id])
-        output += bytearray([self.AX_GOAL_LENGTH])
-        output += bytearray([self.AX_WRITE_DATA])
-        output += bytearray([self.AX_GOAL_POSITION_L])
-        output += bytearray([p[0]])
-        output += bytearray([p[1]])
-        output += bytearray([checksum])
-        self.port.write(output)
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_GOAL_LENGTH])
+        outData += bytearray([self.AX_WRITE_DATA])
+        outData += bytearray([self.AX_GOAL_POSITION_L])
+        outData += bytearray([p[0]])
+        outData += bytearray([p[1]])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readErrorData(id)
+
+    def movePositionSpeed(self, id, position, speed, degree=True, rpm=True):
+        if degree:
+            position = int(position / 300 * 1023)
+        if rpm:
+            speed = int(speed / 114 * 1023)
+            if speed < 1:
+                # due to speed ==0 ==> max velocity
+                speed = 1
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        p = [position & 0xff, position >> 8]
+        s = [speed & 0xff, speed >> 8]
+        checksum = (
+            ~(id + self.AX_GOAL_SP_LENGTH + self.AX_WRITE_DATA +
+              self.AX_GOAL_POSITION_L + p[0] + p[1] + s[0] + s[1])) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_GOAL_SP_LENGTH])
+        outData += bytearray([self.AX_WRITE_DATA])
+        outData += bytearray([self.AX_GOAL_POSITION_L])
+        outData += bytearray([p[0]])
+        outData += bytearray([p[1]])
+        outData += bytearray([s[0]])
+        outData += bytearray([s[1]])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readErrorData(id)
+
+    def movePositionReg(self, id, position, degree=True):
+        """
+            move to position 0->1023 (value) | 0->300 [degree] and save in the register
+        """
+        if degree:
+            position = int(position / 300 * 1023)
+
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        p = [position & 0xff, position >> 8]
+        checksum = (~(id + self.AX_GOAL_LENGTH + self.AX_REG_WRITE +
+                      self.AX_GOAL_POSITION_L + p[0] + p[1])) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_GOAL_LENGTH])
+        outData += bytearray([self.AX_REG_WRITE])
+        outData += bytearray([self.AX_GOAL_POSITION_L])
+        outData += bytearray([p[0]])
+        outData += bytearray([p[1]])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readErrorData(id)
+
+    def movePositionSpeedReg(self, id, position, speed, degree=True, rpm=True):
+        if degree:
+            position = int(position / 300 * 1023)
+        if rpm:
+            speed = int(speed / 114 * 1023)
+            if speed < 1:
+                # due to speed ==0 ==> max velocity
+                speed = 1
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        p = [position & 0xff, position >> 8]
+        s = [speed & 0xff, speed >> 8]
+        checksum = (
+            ~(id + self.AX_GOAL_SP_LENGTH + self.AX_REG_WRITE +
+              self.AX_GOAL_POSITION_L + p[0] + p[1] + s[0] + s[1])) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_GOAL_SP_LENGTH])
+        outData += bytearray([self.AX_REG_WRITE])
+        outData += bytearray([self.AX_GOAL_POSITION_L])
+        outData += bytearray([p[0]])
+        outData += bytearray([p[1]])
+        outData += bytearray([s[0]])
+        outData += bytearray([s[1]])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readErrorData(id)
+
+    def action(self):
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([self.AX_BROADCAST_ID])
+        outData += bytearray([self.AX_ACTION_LENGTH])
+        outData += bytearray([self.AX_ACTION])
+        outData += bytearray([self.AX_ACTION_CHECKSUM])
+        self.port.write(outData)
+
+    def setAngleLimit(self, id, cwLimit, ccwLimit, degree=True):
+        """
+            set up limits for the angle
+            [0, 300] -> [cwLimit, ccwLimit]
+            note that, if both limits are set zeros => wheel
+        """
+        assert cwLimit <= ccwLimit, "cwLimits must be not larger than ccwLimits!!"
+        if degree:
+            cwLimit = int(cwLimit / 300 * 1023)
+            ccwLimit = int(ccwLimit / 300 * 1023)
+
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        cw = [cwLimit & 0xff, cwLimit >> 8]
+        ccw = [ccwLimit & 0xff, ccwLimit >> 8]
+        checksum = (~(id + self.AX_AL_LENGTH + self.AX_WRITE_DATA +
+                      self.AX_CW_ANGLE_LIMIT_L + cw[0] + cw[1] + ccw[0] +
+                      ccw[1])) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_AL_LENGTH])
+        outData += bytearray([self.AX_WRITE_DATA])
+        outData += bytearray([self.AX_CW_ANGLE_LIMIT_L])
+        outData += bytearray([cw[0]])
+        outData += bytearray([cw[1]])
+        outData += bytearray([ccw[0]])
+        outData += bytearray([ccw[1]])
+        outData += bytearray([checksum])
+        self.port.write(outData)
         sleep(self.TX_DELAY_TIME)
         return self.readData(id)
+
+    def readPosition(self, id):
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        checksum = (~(id + self.AX_POS_LENGTH + self.AX_READ_DATA +
+                      self.AX_PRESENT_POSITION_L + self.AX_INT_READ)) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_POS_LENGTH])
+        outData += bytearray([self.AX_READ_DATA])
+        outData += bytearray([self.AX_PRESENT_POSITION_L])
+        outData += bytearray([self.AX_INT_READ])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readErrorData(id)
