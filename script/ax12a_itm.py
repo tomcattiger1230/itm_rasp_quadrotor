@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-06 16:14:22
+LastEditTime: 2022-04-06 18:01:42
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI
 '''
@@ -135,7 +135,7 @@ class DynamixelProtocal1(object):
         self.LEFT = 0
         self.RIGHT = 1
         self.RX_TIME_OUT = 10
-        self.TX_DELAY_TIME = 0.00002
+        self.TX_DELAY_TIME = 0.005
 
 
 class AX12AMotorController(DynamixelProtocal1):
@@ -144,7 +144,7 @@ class AX12AMotorController(DynamixelProtocal1):
         port_str=None,
         RPI_Direction_PIN=18,
     ):
-        super(DynamixelProtocal1, self).__init__()
+        super(AX12AMotorController, self).__init__()
         self.RPI_DIRECTION_TX = GPIO.HIGH
         self.RPI_DIRECTION_RX = GPIO.LOW
         self.RPI_DIRECTION_PIN = RPI_Direction_PIN
@@ -166,9 +166,31 @@ class AX12AMotorController(DynamixelProtocal1):
     def readData(self, id):
         self.direction(self.RPI_DIRECTION_RX)
         reply = self.port.read(5)  # [0xff, 0xff, origin, length, error]
-        print(reply)
-        # try:
-        #     pass
+        try:
+            assert ord(reply[0]) == 0xFF
+        except:
+            print("Timeout on servo " + str(id))
+        try:
+            length = ord(reply[3]) - 2
+            error = ord(reply[4])
+
+            if (error != 0):
+                print("Error from servo: " + self.dictErrors[error] +
+                      ' (code  ' + hex(error) + ')')
+                return -error
+            # just reading error bit
+            elif (length == 0):
+                return error
+            else:
+                if (length > 1):
+                    reply = self.port.read(2)
+                    returnValue = (ord(reply[1]) << 8) + (ord(reply[0]) << 0)
+                else:
+                    reply = self.port.read(1)
+                    returnValue = ord(reply[0])
+                return returnValue
+        except Exception as detail:
+            pass
 
     def movePosition(self, id, position):
         """
@@ -184,7 +206,7 @@ class AX12AMotorController(DynamixelProtocal1):
         output += bytearray([id])
         output += bytearray([self.AX_GOAL_LENGTH])
         output += bytearray([self.AX_WRITE_DATA])
-        output + +bytearray([self.AX_GOAL_POSITION_L])
+        output += bytearray([self.AX_GOAL_POSITION_L])
         output += bytearray([p[0]])
         output += bytearray([p[1]])
         output += bytearray([checksum])
