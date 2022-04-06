@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-06 18:56:31
+LastEditTime: 2022-04-06 23:57:09
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -18,6 +18,7 @@ http://savageelectronics.blogspot.it/2011/01/arduino-y-dynamixel-ax-12.html
 from serial import Serial
 import RPi.GPIO as GPIO
 from time import sleep
+import time
 
 
 class DynamixelProtocal1(object):
@@ -368,3 +369,51 @@ class AX12AMotorController(DynamixelProtocal1):
         self.port.write(outData)
         sleep(self.TX_DELAY_TIME)
         return self.readErrorData(id)
+
+    def learnServos(self, minValue=1, maxValue=6, verbose=False):
+        servoList = []
+        for i in range(minValue, maxValue + 1):
+            try:
+                temp = self.ping(i)
+                servoList.append(i)
+                if verbose:
+                    print("Found servo #" + str(i))
+                time.sleep(0.1)
+
+            except Exception as detail:
+                if verbose:
+                    print("Error pinging servo #" + str(i) + ': ' +
+                          str(detail))
+                pass
+        return servoList
+
+    def ping(self, id):
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        checksum = (~(id + self.AX_READ_DATA + self.AX_PING)) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_READ_DATA])
+        outData += bytearray([self.AX_PING])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readData(id)
+
+    def setID(self, id, newId):
+        self.direction(self.RPI_DIRECTION_TX)
+        self.port.reset_input_buffer()
+        checksum = (~(id + self.AX_ID_LENGTH + self.AX_WRITE_DATA +
+                      self.AX_ID + newId)) & 0xff
+        outData = bytearray([self.AX_START])
+        outData += bytearray([self.AX_START])
+        outData += bytearray([id])
+        outData += bytearray([self.AX_ID_LENGTH])
+        outData += bytearray([self.AX_WRITE_DATA])
+        outData += bytearray([self.AX_ID])
+        outData += bytearray([newId])
+        outData += bytearray([checksum])
+        self.port.write(outData)
+        sleep(self.TX_DELAY_TIME)
+        return self.readData(id)
