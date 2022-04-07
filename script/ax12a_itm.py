@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-06 23:57:09
+LastEditTime: 2022-04-07 14:34:57
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -204,7 +204,7 @@ class AX12AMotorController(DynamixelProtocal1):
             move to position 0->1023 (value) | 0->300 [degree]
         """
         if degree:
-            position = int(position / 300 * 1023)
+            position = int(position / 300.0 * 1023.0)
 
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
@@ -226,9 +226,9 @@ class AX12AMotorController(DynamixelProtocal1):
 
     def movePositionSpeed(self, id, position, speed, degree=True, rpm=True):
         if degree:
-            position = int(position / 300 * 1023)
+            position = int(position / 300.0 * 1023.0)
         if rpm:
-            speed = int(speed / 114 * 1023)
+            speed = int(speed / 114.0 * 1023.0)
             if speed < 1:
                 # due to speed ==0 ==> max velocity
                 speed = 1
@@ -281,9 +281,9 @@ class AX12AMotorController(DynamixelProtocal1):
 
     def movePositionSpeedReg(self, id, position, speed, degree=True, rpm=True):
         if degree:
-            position = int(position / 300 * 1023)
+            position = int(position / 300.0 * 1023.0)
         if rpm:
-            speed = int(speed / 114 * 1023)
+            speed = int(speed / 114.0 * 1023.0)
             if speed < 1:
                 # due to speed ==0 ==> max velocity
                 speed = 1
@@ -328,8 +328,8 @@ class AX12AMotorController(DynamixelProtocal1):
         """
         assert cwLimit <= ccwLimit, "cwLimits must be not larger than ccwLimits!!"
         if degree:
-            cwLimit = int(cwLimit / 300 * 1023)
-            ccwLimit = int(ccwLimit / 300 * 1023)
+            cwLimit = int(cwLimit / 300.0 * 1023.0)
+            ccwLimit = int(ccwLimit / 300.0 * 1023.0)
 
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
@@ -399,7 +399,7 @@ class AX12AMotorController(DynamixelProtocal1):
         outData += bytearray([checksum])
         self.port.write(outData)
         sleep(self.TX_DELAY_TIME)
-        return self.readData(id)
+        return self.readErrorData(id)
 
     def setID(self, id, newId):
         self.direction(self.RPI_DIRECTION_TX)
