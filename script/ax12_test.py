@@ -8,7 +8,7 @@ LastEditTime: 2022-04-06 18:12:59
 Note: Note
 '''
 
-from ax12a_itm import AX12AMotorController
+from itm_rasp_quadrotor.script.ax_controller.ax12a_itm import AX12AMotorController
 import time
 
 if __name__ == '__main__':

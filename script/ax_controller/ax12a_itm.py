@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-07 14:34:57
+LastEditTime: 2022-04-10 19:18:00
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
