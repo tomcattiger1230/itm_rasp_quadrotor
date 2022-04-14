@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-04-10 19:26:52
+LastEditTime: 2022-04-14 11:26:54
 Note: Note
 '''
 
@@ -33,7 +33,7 @@ class AX12Controller(object):
         self.motor_id = dynamixel_id
 
     def traj_callback(self, msg):
-        self.reference_alpha = msg.traj[0].alpha
+        self.reference_alpha = msg.traj[0].alpha + 60.0
         self.reference_alpha_rate = msg.traj[0].alpha_rate
 
     def progress(self, ):
@@ -42,7 +42,7 @@ class AX12Controller(object):
         self.current_angle_degree = self.serial_connection.readPosition(
             self.motor_id)
         itm_manipulator_state_obj = manipulator_state()
-        itm_manipulator_state_obj.angle = self.current_angle_degree
+        itm_manipulator_state_obj.angle = self.current_angle_degree - 60.0
         self.motor_angle_pub.publish(itm_manipulator_state_obj)
 
 
