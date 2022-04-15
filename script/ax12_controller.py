@@ -4,14 +4,14 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-04-14 11:26:54
+LastEditTime: 2022-04-15 16:21:49
 Note: Note
 '''
 
 from ax_controller.ax12a_itm import AX12AMotorController
 import rospy
 import numpy as np
-from itm_mav_msgs.msg import manipulator_state
+from itm_mav_msgs.msg import manipulator_state, itm_trajectory_msg
 
 
 class AX12Controller(object):
