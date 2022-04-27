@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-04-19 17:30:11
+LastEditTime: 2022-04-27 17:16:13
 Note: Note
 '''
 
@@ -16,7 +16,7 @@ from itm_mav_msgs.msg import manipulator_state, itm_trajectory_msg
 
 class AX12Controller(object):
     def __init__(self, serial_port, dynamixel_id=1):
-        self.serial_connection = AX12AMotorController(port=serial_port)
+        self.serial_connection = AX12AMotorController(port_str=serial_port)
         # subscribe trajectory
         self.sub_trajectory = rospy.Subscriber('/robot_trajectory',
                                                itm_trajectory_msg,
@@ -33,7 +33,7 @@ class AX12Controller(object):
         self.motor_id = dynamixel_id
 
     def traj_callback(self, msg):
-        self.reference_alpha = msg.traj[0].alpha + 60.0
+        self.reference_alpha = msg.traj[0].alpha * 180 / np.pi + 60.0
         self.reference_alpha_rate = msg.traj[0].alpha_rate
 
     def progress(self, ):

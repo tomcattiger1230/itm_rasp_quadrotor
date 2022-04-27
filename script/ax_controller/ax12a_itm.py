@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-10 19:18:00
+LastEditTime: 2022-04-27 17:34:53
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -199,12 +199,17 @@ class AX12AMotorController(DynamixelProtocal1):
         except Exception as detail:
             pass
 
-    def movePosition(self, id, position, degree=True):
+    def movePosition(self, id, position, degree=False, rad=True):
         """
             move to position 0->1023 (value) | 0->300 [degree]
         """
         if degree:
             position = int(position / 300.0 * 1023.0)
+        elif rad:
+            position = int(position * 180 / 3.1415926 / 300 * 1023.0)
+
+        if position > 1023.0:
+            position = 1023.0
 
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
@@ -224,14 +229,31 @@ class AX12AMotorController(DynamixelProtocal1):
         sleep(self.TX_DELAY_TIME)
         return self.readErrorData(id)
 
-    def movePositionSpeed(self, id, position, speed, degree=True, rpm=True):
+    def movePositionSpeed(self,
+                          id,
+                          position,
+                          speed,
+                          degree=False,
+                          rpm=False,
+                          rad=True,
+                          rad_s=True):
         if degree:
             position = int(position / 300.0 * 1023.0)
+        elif rad:
+            position = int(position * 180 / 3.1415926 / 300 * 1023.0)
+        if position > 1023.0:
+            position = 1023.0
+
         if rpm:
             speed = int(speed / 114.0 * 1023.0)
-            if speed < 1:
-                # due to speed ==0 ==> max velocity
-                speed = 1
+        elif rad_s:
+            speed = int(speed / 114.0 * 1023.0 / 2 / 3.1415926 * 60)
+        if speed < 1:
+            # due to speed ==0 ==> max velocity
+            speed = 1
+        if speed > 1023.0:
+            speed = 1023.0
+
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
         p = [position & 0xff, position >> 8]
@@ -254,12 +276,16 @@ class AX12AMotorController(DynamixelProtocal1):
         sleep(self.TX_DELAY_TIME)
         return self.readErrorData(id)
 
-    def movePositionReg(self, id, position, degree=True):
+    def movePositionReg(self, id, position, degree=False, rad=True):
         """
             move to position 0->1023 (value) | 0->300 [degree] and save in the register
         """
         if degree:
             position = int(position / 300 * 1023)
+        elif rad:
+            position = int(position * 180 / 3.1415926 / 300 * 1023.0)
+        if position > 1023.0:
+            position = 1023.0
 
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
@@ -279,14 +305,31 @@ class AX12AMotorController(DynamixelProtocal1):
         sleep(self.TX_DELAY_TIME)
         return self.readErrorData(id)
 
-    def movePositionSpeedReg(self, id, position, speed, degree=True, rpm=True):
+    def movePositionSpeedReg(self,
+                             id,
+                             position,
+                             speed,
+                             degree=False,
+                             rpm=False,
+                             rad=True,
+                             rad_s=True):
         if degree:
             position = int(position / 300.0 * 1023.0)
+        elif rad:
+            position = int(position * 180 / 3.1415926 / 300 * 1023.0)
+        if position > 1023.0:
+            position = 1023.0
+
         if rpm:
             speed = int(speed / 114.0 * 1023.0)
-            if speed < 1:
-                # due to speed ==0 ==> max velocity
-                speed = 1
+        elif rad_s:
+            speed = int(speed / 114.0 * 1023.0 / 2 / 3.1415926 * 60)
+        if speed < 1:
+            # due to speed ==0 ==> max velocity
+            speed = 1
+        if speed > 1023.0:
+            speed = 1023.0
+
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
         p = [position & 0xff, position >> 8]
@@ -320,7 +363,7 @@ class AX12AMotorController(DynamixelProtocal1):
         outData += bytearray([self.AX_ACTION_CHECKSUM])
         self.port.write(outData)
 
-    def setAngleLimit(self, id, cwLimit, ccwLimit, degree=True):
+    def setAngleLimit(self, id, cwLimit, ccwLimit, degree=False, rad=True):
         """
             set up limits for the angle
             [0, 300] -> [cwLimit, ccwLimit]
@@ -330,6 +373,9 @@ class AX12AMotorController(DynamixelProtocal1):
         if degree:
             cwLimit = int(cwLimit / 300.0 * 1023.0)
             ccwLimit = int(ccwLimit / 300.0 * 1023.0)
+        elif rad:
+            cwLimit = int(cwLimit * 180 / 3.1415926 / 300.0 * 1023.0)
+            ccwLimit = int(ccwLimit * 180 / 3.1415926 / 300.0 * 1023.0)
 
         self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
