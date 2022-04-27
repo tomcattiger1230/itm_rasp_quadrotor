@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-27 17:34:53
+LastEditTime: 2022-04-27 23:56:08
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -174,12 +174,12 @@ class AX12AMotorController(DynamixelProtocal1):
         self.direction(self.RPI_DIRECTION_RX)
         reply = self.port.read(5)  # [0xff, 0xff, origin, length, error]
         try:
-            assert ord(reply[0]) == 0xFF
+            assert ord(bytearray([reply[0]])) == 0xFF
         except:
             print("Timeout on servo " + str(id))
         try:
-            length = ord(reply[3]) - 2
-            error = ord(reply[4])
+            length = ord(bytearray([reply[3]])) - 2
+            error = ord(bytearray([reply[4]]))
 
             if (error != 0):
                 print("Error from servo: " + self.dictErrors[error] +
@@ -191,10 +191,11 @@ class AX12AMotorController(DynamixelProtocal1):
             else:
                 if (length > 1):
                     reply = self.port.read(2)
-                    returnValue = (ord(reply[1]) << 8) + (ord(reply[0]) << 0)
+                    returnValue = (ord(bytearray([reply[1]])) << 8) + (
+                        ord(bytearray([reply[0]])) << 0)
                 else:
                     reply = self.port.read(1)
-                    returnValue = ord(reply[0])
+                    returnValue = ord(bytearray([reply[0]]))
                 return returnValue
         except Exception as detail:
             pass

@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-04-27 17:16:13
+LastEditTime: 2022-04-27 23:01:12
 Note: Note
 '''
 
@@ -42,7 +42,8 @@ class AX12Controller(object):
         self.current_angle_degree = self.serial_connection.readPosition(
             self.motor_id)
         itm_manipulator_state_obj = manipulator_state()
-        itm_manipulator_state_obj.angle = self.current_angle_degree - 60.0
+        itm_manipulator_state_obj.angle = (self.current_angle_degree -
+                                           60.0) / 180.0 * np.pi
         self.motor_angle_pub.publish(itm_manipulator_state_obj)
 
 
