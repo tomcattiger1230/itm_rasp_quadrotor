@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-04-27 23:56:08
+LastEditTime: 2022-05-02 00:32:00
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -19,6 +19,8 @@ from serial import Serial
 import RPi.GPIO as GPIO
 from time import sleep
 import time
+
+LATENCY_TIMER = 16
 
 
 class DynamixelProtocal1(object):
@@ -162,6 +164,9 @@ class AX12AMotorController(DynamixelProtocal1):
         else:
             self.port = Serial(port_str, baudrate=1000000, timeout=0.001)
 
+        self.packet_start_time = 0.0
+        self.packet_timeout = 0.0
+
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.RPI_DIRECTION_PIN, GPIO.OUT)
@@ -170,8 +175,95 @@ class AX12AMotorController(DynamixelProtocal1):
         GPIO.output(self.RPI_DIRECTION_PIN, d)
         sleep(self.RPI_DIRECTION_SWITCH_DELAY)
 
+    def getCurrentTime(self):
+        return round(time.time() * 1000000000) / 1000000.0
+
+    def isPacketTimeout(self):
+        if self.getTimeSinceStart() > self.packet_timeout:
+            self.packet_timeout = 0
+            return True
+
+        return False
+
+    def getTimeSinceStart(self):
+        time_since = self.getCurrentTime() - self.packet_start_time
+        if time_since < 0.0:
+            self.packet_start_time = self.getCurrentTime()
+
+        return time_since
+
+    def setPacketTimeout(self, packet_length):
+        self.packet_start_time = self.getCurrentTime()
+        self.packet_timeout = (self.tx_time_per_byte *
+                               packet_length) + (LATENCY_TIMER * 2.0) + 2.0
+
+    def rxPacket(self, ):
+        rxpacket = []
+        wait_length = 6
+        rx_length = 0
+        checksum = 0
+        while True:
+            rxpacket.extend(self.port.read(wait_length - rx_length))
+            rx_length = len(rxpacket)
+            if rx_length >= wait_length:
+                for idx in range(rx_length - 1):
+                    if (rxpacket[idx] == 0xFF) and (rxpacket[idx + 1] == 0xFF):
+                        break
+                if idx == 0:  # found at the beginning of the packet
+                    if (rxpacket[2] > 0xFD) or (rxpacket[3] >
+                                                250) or (rxpacket[4] > 0x7F):
+                        # unavailable ID or unavailable Length or unavailable Error
+                        # remove the first byte in the packet
+                        del rxpacket[0]
+                        rx_length -= 1
+                        continue
+
+                    # re-calculate the exact length of the rx packet
+                    if wait_length != (rxpacket[3] + 3 + 1):
+                        wait_length = rxpacket[3] + 3 + 1
+                        continue
+
+                    if rx_length < wait_length:
+                        # check timeout
+                        if self.isPacketTimeout():
+                            if rx_length == 0:
+                                result = "COMM_RX_TIMEOUT"
+                            else:
+                                result = "COMM_RX_CORRUPT"
+                            break
+                        else:
+                            continue
+
+                    # calculate checksum
+                    for i in range(2,
+                                   wait_length - 1):  # except header, checksum
+                        checksum += rxpacket[i]
+                    checksum = ~checksum & 0xFF
+
+                    # verify checksum
+                    if rxpacket[wait_length - 1] == checksum:
+                        result = 'COMM_SUCCESS'
+                    else:
+                        result = 'COMM_RX_CORRUPT'
+                    break
+
+                else:
+                    # remove unnecessary packets
+                    del rxpacket[0:idx]
+                    rx_length -= idx
+            else:
+                # check timeout
+                if self.isPacketTimeout():
+                    if rx_length == 0:
+                        result = 'COMM_RX_TIMEOUT'
+                    else:
+                        result = 'COMM_RX_CORRUPT'
+                    break
+        return rxpacket, result
+
     def readErrorData(self, id):
         self.direction(self.RPI_DIRECTION_RX)
+        self.setPacketTimeout(6)
         reply = self.port.read(5)  # [0xff, 0xff, origin, length, error]
         try:
             assert ord(bytearray([reply[0]])) == 0xFF
