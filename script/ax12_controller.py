@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-04-27 23:01:12
+LastEditTime: 2022-05-02 12:23:07
 Note: Note
 '''
 
@@ -48,6 +48,7 @@ class AX12Controller(object):
 
 
 if __name__ == '__main__':
+    rospy.init('ax12_control')
     ax12_obj = AX12Controller(serial_port=None)
 
     rate = rospy.Rate(10)

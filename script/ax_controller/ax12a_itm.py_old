@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-06 14:19:19
 LastEditors: Wei Luo
-LastEditTime: 2022-05-02 16:19:51
+LastEditTime: 2022-05-02 14:12:45
 Note: self-design class for handle AX-12A
 smart servo motor using Raspberry PI Python2/3
 
@@ -17,7 +17,7 @@ http://savageelectronics.blogspot.it/2011/01/arduino-y-dynamixel-ax-12.html
 
 from serial import Serial
 import serial
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 from time import sleep
 import time
 
@@ -155,10 +155,10 @@ class AX12AMotorController(DynamixelProtocal1):
         RPI_Direction_PIN=18,
     ):
         super(AX12AMotorController, self).__init__()
-        # self.RPI_DIRECTION_TX = GPIO.HIGH
-        # self.RPI_DIRECTION_RX = GPIO.LOW
-        # self.RPI_DIRECTION_PIN = RPI_Direction_PIN
-        # self.RPI_DIRECTION_SWITCH_DELAY = 0.0001
+        self.RPI_DIRECTION_TX = GPIO.HIGH
+        self.RPI_DIRECTION_RX = GPIO.LOW
+        self.RPI_DIRECTION_PIN = RPI_Direction_PIN
+        self.RPI_DIRECTION_SWITCH_DELAY = 0.0001
 
         if port_str is None:
             self.port = Serial(
@@ -177,9 +177,9 @@ class AX12AMotorController(DynamixelProtocal1):
         self.packet_timeout = 0.0
         self.tx_time_per_byte = (1000.0 / 1000000) * 10.0
 
-        # GPIO.setwarnings(False)
-        # GPIO.setmode(GPIO.BCM)
-        # GPIO.setup(self.RPI_DIRECTION_PIN, GPIO.OUT)
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.RPI_DIRECTION_PIN, GPIO.OUT)
 
     def direction(self, d):
         GPIO.output(self.RPI_DIRECTION_PIN, d)
@@ -327,8 +327,8 @@ class AX12AMotorController(DynamixelProtocal1):
         return rxpacket, result, error
 
     def readErrorData(self, id):
-        # self.direction(self.RPI_DIRECTION_RX)
-        # self.setPacketTimeout(6)
+        self.direction(self.RPI_DIRECTION_RX)
+        self.setPacketTimeout(6)
         reply = self.port.read(5)  # [0xff, 0xff, origin, length, error]
         print(reply)
         try:
@@ -372,7 +372,7 @@ class AX12AMotorController(DynamixelProtocal1):
 
         position = int(position)
 
-        # self.direction(self.RPI_DIRECTION_TX)
+        self.direction(self.RPI_DIRECTION_TX)
         self.port.reset_input_buffer()
         p = [position & 0xff, position >> 8]
         checksum = (~(id + self.AX_GOAL_LENGTH + self.AX_WRITE_DATA +
@@ -565,7 +565,7 @@ class AX12AMotorController(DynamixelProtocal1):
         return self.readData(id)
 
     def readPosition(self, id):
-        # self.direction(self.RPI_DIRECTION_TX)
+        self.direction(self.RPI_DIRECTION_TX)
         # self.port.reset_input_buffer()
         # checksum = (~(id + self.AX_POS_LENGTH + self.AX_READ_DATA +
         #               self.AX_PRESENT_POSITION_L + self.AX_INT_READ)) & 0xff
@@ -579,7 +579,7 @@ class AX12AMotorController(DynamixelProtocal1):
         # outData += bytearray([checksum])
         # self.port.write(outData)
         # print(outData)
-        # sleep(self.TX_DELAY_TIME)
+        # # sleep(self.TX_DELAY_TIME)
         # self.setPacketTimeout(8)
         # rc_data, result = self.rxPacket()
         # print(rc_data)
