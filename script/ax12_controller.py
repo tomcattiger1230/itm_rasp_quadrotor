@@ -4,54 +4,96 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-02 12:23:07
+LastEditTime: 2022-05-14 00:26:59
 Note: Note
 '''
 
-from ax_controller.ax12a_itm import AX12AMotorController
+from ax_controller.ax12_config import AX12A
 import rospy
 import numpy as np
 from itm_mav_msgs.msg import manipulator_state, itm_trajectory_msg
 
 
 class AX12Controller(object):
-    def __init__(self, serial_port, dynamixel_id=1):
-        self.serial_connection = AX12AMotorController(port_str=serial_port)
+    def __init__(self, dynamixel_id=1):
+        # e.g 'COM3' windows or '/dev/ttyUSB0' for Linux
+        AX12A.DEVICENAME = '/dev/ttyUSB0'
+
+        AX12A.BAUDRATE = 1_000_000
+
+        # sets baudrate and opens com port
+        AX12A.connect()
+
+        self.serial_connection = AX12A(dynamixel_id)
+
         # subscribe trajectory
         self.sub_trajectory = rospy.Subscriber('/robot_trajectory',
                                                itm_trajectory_msg,
                                                self.traj_callback,
                                                queue_size=10)
-        # publish angle publish
+        # publish angle, topicname '/itm_manipulator_state', topictype manipulator_state
         self.current_angle_degree = 0.0
-        self.motor_angle_pub = rospy.Publisher(
-            '/itm_manipulator_state',
-            manipulator_state,
-        )
-        self.reference_alpha = np.pi / 2.0
-        self.reference_alpha_rate = 0.0
+        self.motor_angle_pub = rospy.Publisher('/itm_manipulator_state',
+                                               manipulator_state,
+                                               queue_size=10)
+        self.reference_alpha = 0.0
+        self.reference_alpha_pos = self.rad_to_pos(self.reference_alpha)
+        # self.reference_alpha_rate = 1
+        # self.reference_alpha_rate_pos = self.rpm_to_ratepos(self.reference_alpha_rate)
         self.motor_id = dynamixel_id
+        self.itm_manipulator_state_obj = manipulator_state()
 
     def traj_callback(self, msg):
-        self.reference_alpha = msg.traj[0].alpha * 180 / np.pi + 60.0
-        self.reference_alpha_rate = msg.traj[0].alpha_rate
+        self.reference_alpha = msg.traj[1].alpha
+        # print(self.reference_alpha)
+        # self.reference_alpha_pos = self.rad_to_pos(self.reference_alpha)
+
+        # self.reference_alpha_rate = msg.traj[0].alpha_rate
+        # self.reference_alpha_rate_pos = self.rpm_to_ratepos(self.reference_alpha_rate)
 
     def progress(self, ):
-        self.serial_connection.movePosition(self.motor_id,
-                                            self.reference_alpha)
-        self.current_angle_degree = self.serial_connection.readPosition(
-            self.motor_id)
-        itm_manipulator_state_obj = manipulator_state()
-        itm_manipulator_state_obj.angle = (self.current_angle_degree -
-                                           60.0) / 180.0 * np.pi
-        self.motor_angle_pub.publish(itm_manipulator_state_obj)
+        self.serial_connection.set_goal_position(
+            self.pos_to_rad(self.reference_alpha_pos))
+        # get the current angle of the manip.
+        self.current_angle_degree = self.pos_to_rad(
+            self.serial_connection.get_present_position())
+
+        # publish the current angle of the manip.
+        self.itm_manipulator_state_obj.angle = self.current_angle_degree
+        self.itm_manipulator_state_obj.header.stamp = rospy.Time.now()
+        self.motor_angle_pub.publish(self.itm_manipulator_state_obj)
+
+    @staticmethod
+    def rpm_to_ratepos(rpm):
+        ratepos = int(rpm / 114 * 1023)
+        return ratepos
+
+    @staticmethod
+    def degree_to_pos(degree):
+        pos = int((degree + 60) / 300 * 1023)
+        return pos
+
+    @staticmethod
+    def pos_to_degree(pos):
+        degree = (pos * 300 / 1023) - 60
+        return degree
+
+    @staticmethod
+    def rad_to_pos(rad):
+        pos = int((rad + 1 / 3 * np.pi) / (300 / 180 * np.pi) * 1023)
+        return pos
+
+    @staticmethod
+    def pos_to_rad(pos):
+        rad = (pos * (300 / 180 * np.pi) / 1023) - 1 / 3 * np.pi
+        return rad
 
 
 if __name__ == '__main__':
-    rospy.init('ax12_control')
-    ax12_obj = AX12Controller(serial_port=None)
+    rospy.init_node('ax12a_controller')
+    ax12_obj = AX12Controller(1)
 
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(100)
 
     while not rospy.is_shutdown():
         ax12_obj.progress()
