@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-14 00:26:59
+LastEditTime: 2022-05-14 17:05:37
 Note: Note
 '''
 
@@ -15,7 +15,7 @@ from itm_mav_msgs.msg import manipulator_state, itm_trajectory_msg
 
 
 class AX12Controller(object):
-    def __init__(self, dynamixel_id=1):
+    def __init__(self, dynamixel_id=1, pos_rate_control=False):
         # e.g 'COM3' windows or '/dev/ttyUSB0' for Linux
         AX12A.DEVICENAME = '/dev/ttyUSB0'
 
@@ -42,18 +42,26 @@ class AX12Controller(object):
         # self.reference_alpha_rate_pos = self.rpm_to_ratepos(self.reference_alpha_rate)
         self.motor_id = dynamixel_id
         self.itm_manipulator_state_obj = manipulator_state()
+        self.pos_rate_control = pos_rate_control
 
     def traj_callback(self, msg):
         self.reference_alpha = msg.traj[1].alpha
+        if self.pos_rate_control:
+            self.reference_alpha_rate = msg.traj[0].alpha_rate
         # print(self.reference_alpha)
         # self.reference_alpha_pos = self.rad_to_pos(self.reference_alpha)
 
-        # self.reference_alpha_rate = msg.traj[0].alpha_rate
         # self.reference_alpha_rate_pos = self.rpm_to_ratepos(self.reference_alpha_rate)
 
     def progress(self, ):
-        self.serial_connection.set_goal_position(
-            self.pos_to_rad(self.reference_alpha_pos))
+        if self.pos_rate_control:
+            self.serial_connection.set_goal_position_speed(
+                self.rad_to_pos(self.reference_alpha),
+                self.rad_per_second_to_ratepos(self.reference_alpha_rate))
+        else:
+            self.serial_connection.set_goal_position(
+                self.rad_to_pos(self.reference_alpha))
+
         # get the current angle of the manip.
         self.current_angle_degree = self.pos_to_rad(
             self.serial_connection.get_present_position())
@@ -66,6 +74,11 @@ class AX12Controller(object):
     @staticmethod
     def rpm_to_ratepos(rpm):
         ratepos = int(rpm / 114 * 1023)
+        return ratepos
+
+    @staticmethod
+    def rad_per_second_to_ratepos(rad_speed):
+        ratepos = int(rad_speed * 30 / np.pi / 114 * 1023)
         return ratepos
 
     @staticmethod
