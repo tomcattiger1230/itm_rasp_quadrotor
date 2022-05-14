@@ -93,7 +93,10 @@ class AX12A(object):
 
     def set_register4(self, reg_num, reg_value_1, reg_value_2):
         dxl_comm_result, dxl_error = AX12A.packetHandler.write4ByteTxRx(
-            AX12A.portHandler, self.id, reg_num, reg_value)
+            AX12A.portHandler,
+            self.id,
+            reg_num,
+            data=(reg_value_2 << 16) + reg_value_1)
         AX12A.check_error(dxl_comm_result, dxl_error)
 
     def get_moving_speed(self):
