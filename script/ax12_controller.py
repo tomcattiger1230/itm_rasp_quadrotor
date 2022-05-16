@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-14 17:05:37
+LastEditTime: 2022-05-16 10:23:23
 Note: Note
 '''
 
@@ -58,9 +58,11 @@ class AX12Controller(object):
             self.serial_connection.set_goal_position_speed(
                 self.rad_to_pos(self.reference_alpha),
                 self.rad_per_second_to_ratepos(self.reference_alpha_rate))
+            rospy.loginfo_once("Using angle and angular rate command")
         else:
             self.serial_connection.set_goal_position(
                 self.rad_to_pos(self.reference_alpha))
+            rospy.loginfo_once("Using angle command")
 
         # get the current angle of the manip.
         self.current_angle_degree = self.pos_to_rad(
@@ -104,7 +106,12 @@ class AX12Controller(object):
 
 if __name__ == '__main__':
     rospy.init_node('ax12a_controller')
-    ax12_obj = AX12Controller(1)
+    if rospy.has_param('~alpha_rate'):
+        has_alpha_rate = rospy.get_param('~alpha_rate')
+    else:
+        has_alpha_rate = False
+
+    ax12_obj = AX12Controller(1, pos_rate_control=has_alpha_rate)
 
     rate = rospy.Rate(100)
 

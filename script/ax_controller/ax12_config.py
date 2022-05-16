@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding=UTF-8
 
-from dynamixel_sdk import *  # Uses Dynamixel SDK library
+from ax_controller.dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 
 class AX12A(object):
