@@ -32,3 +32,5 @@
 *.app
 
 script/__pycache__/
+script/ax_controller/__pycache__/
+
