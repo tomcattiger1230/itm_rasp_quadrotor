@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-18 15:09:44
+LastEditTime: 2022-05-18 15:18:42
 Note: Note
 '''
 
@@ -57,7 +57,8 @@ class AX12Controller(object):
         if self.pos_rate_control:
             self.serial_connection.set_goal_position_speed(
                 self.rad_to_pos(self.reference_alpha),
-                self.rad_per_second_to_ratepos(self.reference_alpha_rate))
+                self.rad_per_second_to_ratepos(
+                    np.abs(self.reference_alpha_rate)))
             rospy.loginfo_once("Using angle and angular rate command")
         else:
             self.serial_connection.set_goal_position(
