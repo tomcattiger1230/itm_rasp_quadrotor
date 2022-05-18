@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-16 10:23:23
+LastEditTime: 2022-05-18 15:09:44
 Note: Note
 '''
 
@@ -106,8 +106,8 @@ class AX12Controller(object):
 
 if __name__ == '__main__':
     rospy.init_node('ax12a_controller')
-    if rospy.has_param('~alpha_rate'):
-        has_alpha_rate = rospy.get_param('~alpha_rate')
+    if rospy.has_param('~has_alpha_rate'):
+        has_alpha_rate = rospy.get_param('~has_alpha_rate')
     else:
         has_alpha_rate = False
 

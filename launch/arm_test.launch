@@ -1,5 +1,6 @@
 <launch>
     <node name="arm_control" pkg="itm_rasp_quadrotor" type="ax12_controller.py" output="screen" >
 
+            <param name="has_alpha_rate" value="true"/>
     </node>
 </launch>
