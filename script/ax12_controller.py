@@ -4,7 +4,7 @@
 Author: Wei Luo
 Date: 2022-04-10 18:55:02
 LastEditors: Wei Luo
-LastEditTime: 2022-05-18 15:18:42
+LastEditTime: 2022-05-18 15:21:07
 Note: Note
 '''
 
@@ -37,6 +37,7 @@ class AX12Controller(object):
                                                manipulator_state,
                                                queue_size=10)
         self.reference_alpha = 0.0
+        self.reference_alpha_rate = 0.0
         self.reference_alpha_pos = self.rad_to_pos(self.reference_alpha)
         # self.reference_alpha_rate = 1
         # self.reference_alpha_rate_pos = self.rpm_to_ratepos(self.reference_alpha_rate)
